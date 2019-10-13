@@ -21,9 +21,21 @@ klass = le.fit_transform(list(data["class"]))
 
 predict = "class"
 
+# Vi vill använda X för att se om vi kan använda värden i X för att förutsäga y
 X = list(zip(buying, maint, door, persons, lug_boot, safety))
 y = list(klass)
 
 x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, test_size=0.1)
 
+model = KNeighborsClassifier(n_neighbors=9)
 
+model.fit(x_train, y_train)
+acc = model.score(x_test, y_test)
+print(acc)
+
+predictions = model.predict(x_test)
+
+names = {0: "unacc",1: "acc",2: "good",3: "vgood"}
+
+for index, prediction in enumerate(predictions):
+    print(f"Predicted: {names[prediction]}, Data: {x_test[index]}, Actual: {names[y_test[index]]}")
