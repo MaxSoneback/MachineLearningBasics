@@ -1,4 +1,5 @@
 import sklearn
+from termcolor import colored
 from sklearn.utils import shuffle
 from sklearn.neighbors import KNeighborsClassifier
 import pandas as pd
@@ -20,43 +21,38 @@ def fold_cross_validation(x_folds, y_folds):
     Detta åstadkommer vi först och främst genom att loopa från K = 1 till K = 10, därefter konstruerar vi en inre loop
     där vi loopar över antalet folds 'l' med indexet 'j'. Vi använder sedan fold j som testmängd och resterande folds som
     träningsmängd, s.a. alla folds får agera testmängd. På så vis kan vi testa ett givet k l gånger genom att spara den
-    ackumulerade accuracyn för varje varv i den inre loopen. om denna accuracy är högre än 'best_avg_acc', spara värdet
-    på k. Testa sedan ett nytt värde på k
-
-
+    ackumulerade förklaringsgraden för varje varv i den inre loopen. Om genomsnittet på denna förklaringsgrad är högre
+    än 'best_avg_acc', spara värdet på k. Testa sedan ett nytt värde på k.
     """
     best_avg_acc = float('-inf')
     best_k = float('-inf')
 
-    for number_of_neighbors in range(1, 11):
+    for k in range(1, 11):
         cum_acc = 0
 
         for j in range(0, len(x_folds)):
             x_train, x_test = folds_split_train_and_test(x_folds, j)
             y_train, y_test = folds_split_train_and_test(y_folds, j)
-            model = KNeighborsClassifier(n_neighbors=number_of_neighbors)
-            # Träna modellen
+            model = KNeighborsClassifier(n_neighbors=k)
             model.fit(x_train, y_train)
 
-            # Hur väl fungerar den på test-datan?
+            # räkna ut ackumulerad förklaringsgrad, när den inre loopen loopat färdig används detta för att utvärdera
+            # hur väl detta k fungerar på datamängden
             cum_acc += model.score(x_test, y_test)
 
-        avg_acc = cum_acc/len(x_folds)
-        #print(f'antalet grannar är nu {number_of_neighbors} och avg_acc {avg_acc}')
+        avg_acc = cum_acc / len(x_folds)
+        # print(f'antalet grannar är nu {k} och avg_acc {avg_acc}')
 
         if avg_acc > best_avg_acc:
             best_avg_acc = avg_acc
-            best_k = number_of_neighbors
-    #print(f'best_k är {best_k}')
+            best_k = k
+    # print(f'best_k är {best_k}')
     return best_k
 
 
 def folds_split_train_and_test(folds, index):
-    #train = [fold for fold_index, fold in enumerate(folds) if fold_index != index]
     test = folds[index]
     train = np.concatenate(np.delete(folds, index))
-    #print('modifierad train')
-    #print(train)
     return train, test
 
 
@@ -76,14 +72,14 @@ klass = le.fit_transform(list(data["class"]))
 
 predict = "class"
 
-# Vi vill använda X för att se om vi kan använda värden i X för att förutsäga y
+# Vi vill använda värden i X för att förutsäga y
 X = list(zip(buying, maint, door, persons, lug_boot, safety))
 y = list(klass)
 
+# Vi använder 20% av datamängden som träningsdata, dvs 20% av datan används för att förutsäga resterande 80%.
 x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, test_size=0.2)
 x_folds, y_folds = train_sets_fold_split(x_train, y_train)
 k = fold_cross_validation(x_folds, y_folds)
-#print(k)
 model = KNeighborsClassifier(n_neighbors=k)
 
 # Träna modellen
@@ -91,11 +87,12 @@ model.fit(x_train, y_train)
 
 # Hur väl fungerar den på test-datan?
 acc = model.score(x_test, y_test)
-#print(acc)
 
 predictions = model.predict(x_test)
 
-names = {0: "unacc",1: "acc",2: "good",3: "vgood"}
+names = {0: "unacc", 1: "acc", 2: "good", 3: "vgood"}
 
 for index, prediction in enumerate(predictions):
-    print(f"Predicted: {names[prediction]}, Data: {x_test[index]}, Actual: {names[y_test[index]]}")
+    color = 'green' if names[prediction] == names[y_test[index]] else 'red'
+    print(f"Prediktion: {colored(names[prediction], color)}, Data: {x_test[index]}, Faktiskt värde: {names[y_test[index]]}")
+print(f'Förklaringsgraden är {acc} med k = {k}')
