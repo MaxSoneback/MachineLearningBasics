@@ -9,22 +9,21 @@ from sklearn import linear_model, preprocessing
 def train_sets_fold_split(x_list, y_list, nr_of_folds=5):
     # sklearn har en egen KFold cross validator som både skapar folds + validerar (sklearn.model_selection.KFold),
     # jag försöker här dock konstruera en egen för att få djupare förståelse i ämnet
-    x_np_array = np.asarray(x_list)
-    y_np_array = np.asarray(y_list)
-    x_folds = np.array_split(x_np_array, nr_of_folds)
-    y_folds = np.array_split(y_np_array, nr_of_folds)
+    x_folds = np.array_split(x_list, nr_of_folds)
+    y_folds = np.array_split(y_list, nr_of_folds)
     return x_folds, y_folds
 
 
 def fold_cross_validation(x_folds, y_folds):
     best_avg_acc = float('-inf')
     best_k = float('-inf')
-    for i in range(0,9):
-        cum_acc = 0
-        for j in range(len(x_folds)):
-            x_train, x_test = folds_split_train_and_test(x_folds, index)
-            y_train, y_test = folds_split_train_and_test(y_folds, index)
 
+    for i in range(1, 9):
+        cum_acc = 0
+
+        for j in range(len(x_folds)):
+            x_train, x_test = folds_split_train_and_test(x_folds, j)
+            y_train, y_test = folds_split_train_and_test(y_folds, j)
             model = KNeighborsClassifier(n_neighbors=i)
             # Träna modellen
             model.fit(x_train, y_train)
@@ -33,6 +32,7 @@ def fold_cross_validation(x_folds, y_folds):
             cum_acc += model.score(x_test, y_test)
 
         avg_acc = cum_acc/len(x_folds)
+
         if avg_acc > best_avg_acc:
             best_avg_acc = avg_acc
             best_k = i
@@ -41,8 +41,11 @@ def fold_cross_validation(x_folds, y_folds):
 
 
 def folds_split_train_and_test(folds, index):
-    train = [fold for fold_index, fold in enumerate(folds) if fold_index != index]
+    #train = [fold for fold_index, fold in enumerate(folds) if fold_index != index]
     test = folds[index]
+    train = np.concatenate(np.delete(folds, index))
+    #print('modifierad train')
+    #print(train)
     return train, test
 
 
@@ -67,11 +70,12 @@ X = list(zip(buying, maint, door, persons, lug_boot, safety))
 y = list(klass)
 
 x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, test_size=0.2)
-
+#print('Orörd x_train')
+#print(x_train)
 x_folds, y_folds = train_sets_fold_split(x_train, y_train)
 k = fold_cross_validation(x_folds, y_folds)
-
-model = KNeighborsClassifier(n_neighbors=9)
+# print(k)
+model = KNeighborsClassifier(n_neighbors=k)
 
 # Träna modellen
 model.fit(x_train, y_train)
