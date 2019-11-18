@@ -15,16 +15,26 @@ def train_sets_fold_split(x_list, y_list, nr_of_folds=5):
 
 
 def fold_cross_validation(x_folds, y_folds):
+    """
+    Målet med fold_cross_validation är att hitta det optimala värdet på k enbart genom att använda vår träningsdata.
+    Detta åstadkommer vi först och främst genom att loopa från K = 1 till K = 10, därefter konstruerar vi en inre loop
+    där vi loopar över antalet folds 'l' med indexet 'j'. Vi använder sedan fold j som testmängd och resterande folds som
+    träningsmängd, s.a. alla folds får agera testmängd. På så vis kan vi testa ett givet k l gånger genom att spara den
+    ackumulerade accuracyn för varje varv i den inre loopen. om denna accuracy är högre än 'best_avg_acc', spara värdet
+    på k. Testa sedan ett nytt värde på k
+
+
+    """
     best_avg_acc = float('-inf')
     best_k = float('-inf')
 
-    for i in range(1, 9):
+    for number_of_neighbors in range(1, 11):
         cum_acc = 0
 
-        for j in range(len(x_folds)):
+        for j in range(0, len(x_folds)):
             x_train, x_test = folds_split_train_and_test(x_folds, j)
             y_train, y_test = folds_split_train_and_test(y_folds, j)
-            model = KNeighborsClassifier(n_neighbors=i)
+            model = KNeighborsClassifier(n_neighbors=number_of_neighbors)
             # Träna modellen
             model.fit(x_train, y_train)
 
@@ -32,12 +42,13 @@ def fold_cross_validation(x_folds, y_folds):
             cum_acc += model.score(x_test, y_test)
 
         avg_acc = cum_acc/len(x_folds)
+        #print(f'antalet grannar är nu {number_of_neighbors} och avg_acc {avg_acc}')
 
         if avg_acc > best_avg_acc:
             best_avg_acc = avg_acc
-            best_k = i
-
-        return best_k
+            best_k = number_of_neighbors
+    #print(f'best_k är {best_k}')
+    return best_k
 
 
 def folds_split_train_and_test(folds, index):
@@ -70,11 +81,9 @@ X = list(zip(buying, maint, door, persons, lug_boot, safety))
 y = list(klass)
 
 x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, test_size=0.2)
-#print('Orörd x_train')
-#print(x_train)
 x_folds, y_folds = train_sets_fold_split(x_train, y_train)
 k = fold_cross_validation(x_folds, y_folds)
-# print(k)
+#print(k)
 model = KNeighborsClassifier(n_neighbors=k)
 
 # Träna modellen
@@ -82,7 +91,7 @@ model.fit(x_train, y_train)
 
 # Hur väl fungerar den på test-datan?
 acc = model.score(x_test, y_test)
-print(acc)
+#print(acc)
 
 predictions = model.predict(x_test)
 
