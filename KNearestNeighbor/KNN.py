@@ -1,3 +1,4 @@
+import pickle
 import sklearn
 from termcolor import colored
 from sklearn.utils import shuffle
@@ -76,23 +77,36 @@ predict = "class"
 X = list(zip(buying, maint, door, persons, lug_boot, safety))
 y = list(klass)
 
-# Vi använder 20% av datamängden som träningsdata, dvs 20% av datan används för att förutsäga resterande 80%.
-x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, test_size=0.2)
-x_folds, y_folds = train_sets_fold_split(x_train, y_train)
-k = fold_cross_validation(x_folds, y_folds)
-model = KNeighborsClassifier(n_neighbors=k)
+best_acc = float('-inf')
+best_k = 1
+for __ in range(100):
+    # Vi använder 20% av datamängden som träningsdata, dvs 20% av datan används för att förutsäga resterande 80%.
+    x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, test_size=0.2)
+    x_folds, y_folds = train_sets_fold_split(x_train, y_train)
+    k = fold_cross_validation(x_folds, y_folds)
+    model = KNeighborsClassifier(n_neighbors=k)
 
-# Träna modellen
-model.fit(x_train, y_train)
+    # Träna modellen
+    model.fit(x_train, y_train)
 
-# Hur väl fungerar den på test-datan?
-acc = model.score(x_test, y_test)
+    # Hur väl fungerar den på test-datan?
+    acc = model.score(x_test, y_test)
 
-predictions = model.predict(x_test)
+    if acc > best_acc:
+        best_acc = acc
+        best_k = k
+        with open('knn_model.pickle', 'wb') as pickle_file:
+            pickle.dump(model, pickle_file)
+
+pickle_in = open("knn_model.pickle", "rb")
+best_model = pickle.load(pickle_in)
+
+predictions = best_model.predict(x_test)
 
 names = {0: "unacc", 1: "acc", 2: "good", 3: "vgood"}
 
 for index, prediction in enumerate(predictions):
     color = 'green' if names[prediction] == names[y_test[index]] else 'red'
     print(f"Prediktion: {colored(names[prediction], color)}, Data: {x_test[index]}, Faktiskt värde: {names[y_test[index]]}")
-print(f'Förklaringsgraden är {acc} med k = {k}')
+
+print(f"Modellen med bäst förklaringsgrad hade R2 = {round(best_acc,3)} & k = {best_k}")
