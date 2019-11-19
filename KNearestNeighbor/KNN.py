@@ -79,9 +79,9 @@ y = list(klass)
 
 best_acc = float('-inf')
 best_k = 1
-for __ in range(100):
-    # Vi använder 20% av datamängden som träningsdata, dvs 20% av datan används för att förutsäga resterande 80%.
-    x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, test_size=0.2)
+for __ in range(10):
+    # Vi använder 80% av datamängden som träningsdata, dvs 80% av datan används för att förutsäga resterande 20%.
+    x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, test_size=0.4)
     x_folds, y_folds = train_sets_fold_split(x_train, y_train)
     k = fold_cross_validation(x_folds, y_folds)
     model = KNeighborsClassifier(n_neighbors=k)

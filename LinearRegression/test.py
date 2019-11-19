@@ -21,7 +21,7 @@ best_acc = float('-inf')
 for __ in range(1000):
 
     # Dela upp vår data-mängd i subarrayer. x_train och y_train är subarrayer av X och y,
-    # x_test och y_test testar pricksäkerheten. test_size=0.1 säger att vi använder 10% av
+    # x_test och y_test testar pricksäkerheten. test_size=0.1 säger att vi använder 90% av
     # ursprungsdatan för att träna vår modell
     x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, test_size=0.1)
 
